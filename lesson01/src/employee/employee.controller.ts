@@ -1,12 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Ip } from '@nestjs/common';
 import { EmployeeService } from './employee.service';
 import { Prisma } from 'generated/prisma/client';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { MyLoggerService } from 'src/my-logger/my-logger.service';
 
 @SkipThrottle() // Skip throttling for all routes in this controller
 @Controller('employees')
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
+  private readonly logger = new MyLoggerService(EmployeeController.name);
 
   @Post()
   create(@Body() createEmployeeDto: Prisma.EmployeeCreateInput) {
@@ -15,7 +17,8 @@ export class EmployeeController {
 
   @SkipThrottle({ default: false }) // Enable throttling for this route only
   @Get()
-  findAll(@Query('role') role?: 'ADMIN' | 'EMPLOYEE' | 'MANAGER' | 'INTERN') {
+  findAll(@Ip() ip: string, @Query('role') role?: 'ADMIN' | 'EMPLOYEE' | 'MANAGER' | 'INTERN') {
+    this.logger.log(`Request for all Employees\t${Ip}`);
     return this.employeeService.findAll(role);
   }
 
